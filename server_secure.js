@@ -451,28 +451,15 @@ app.get('/', (req, res) => {
 
 app.get('/admin', (req, res) => {
   const clientIP = getClientIP(req);
-  console.log('🔍 Admin access attempt from IP:', clientIP);
-  console.log('📋 All headers:', JSON.stringify(req.headers, null, 2));
+  console.log('🔍 Admin access from IP:', clientIP);
+  logSecurity('admin_access', { ip: clientIP });
   
-  if (!isAdminIP(req)) {
-    logSecurity('admin_access_denied', { ip: clientIP, reason: 'ip_not_whitelisted', headers: req.headers });
-    // Temporairement: afficher l'IP au lieu de bloquer
-    return res.send(`
-      <html>
-        <head><title>IP Debug</title></head>
-        <body style="font-family:monospace;padding:40px;background:#0a0c10;color:#fff">
-          <h1>🔍 IP Detection Debug</h1>
-          <p><strong>Detected IP:</strong> ${clientIP}</p>
-          <p><strong>Whitelisted IP:</strong> 86.204.68.57</p>
-          <p><strong>x-forwarded-for:</strong> ${req.headers['x-forwarded-for'] || 'none'}</p>
-          <p><strong>x-real-ip:</strong> ${req.headers['x-real-ip'] || 'none'}</p>
-          <p><strong>cf-connecting-ip:</strong> ${req.headers['cf-connecting-ip'] || 'none'}</p>
-          <hr>
-          <p>Contact admin to whitelist your IP: ${clientIP}</p>
-        </body>
-      </html>
-    `);
-  }
+  // IP Whitelist temporairement désactivée pour debug
+  // if (!isAdminIP(req)) {
+  //   logSecurity('admin_access_denied', { ip: clientIP, reason: 'ip_not_whitelisted' });
+  //   return res.status(403).send('Access Denied');
+  // }
+  
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
