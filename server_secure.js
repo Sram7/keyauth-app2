@@ -434,11 +434,23 @@ app.get('/api/security-logs', requireAdmin, (req, res) => {
   }
 });
 
+// IP Whitelist pour le panel admin
+const ADMIN_WHITELIST = ['86.204.68.57'];
+
+function isAdminIP(req) {
+  const ip = getClientIP(req);
+  return ADMIN_WHITELIST.includes(ip);
+}
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('/admin', (req, res) => {
+  if (!isAdminIP(req)) {
+    logSecurity('admin_access_denied', { ip: getClientIP(req), reason: 'ip_not_whitelisted' });
+    return res.status(403).send('Access Denied');
+  }
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
