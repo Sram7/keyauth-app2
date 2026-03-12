@@ -1,0 +1,29 @@
+{
+  "name": "engime-auth-server",
+  "version": "1.0.0",
+  "description": "API auth ultra-sécurisée + panel admin pour gestion des clés",
+  "main": "server_secure.js",
+  "scripts": {
+    "start": "node server_secure.js",
+    "dev": "node server_secure.js",
+    "simple": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0"
+  },
+  "keywords": [
+    "auth",
+    "api",
+    "security",
+    "hmac",
+    "rate-limiting"
+  ],
+  "author": "Sramtwo",
+  "license": "MIT"
+}

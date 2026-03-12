@@ -1,0 +1,103 @@
+================================================================================
+  PANEL + API AUTH — TOUT EN UN (auth_server)
+================================================================================
+
+Un seul serveur Node.js : il affiche le panel (création de clés, Sync serveur)
+et répond à l’API que le loader appelle pour valider les clés.
+Pas de Netlify, pas de Cloudflare. Juste ce dossier + Node.js.
+
+================================================================================
+  PARTIE 1 — EN LOCAL (sur ton PC)
+================================================================================
+
+1. Installer Node.js
+   - Va sur https://nodejs.org → télécharge la version LTS → installe.
+   - Ouvre PowerShell ou CMD, tape :  node -v
+   - Tu dois voir un numéro (ex. v20.x). Sinon réinstalle Node.
+
+2. Fichier .env
+   - Ouvre le dossier auth_server.
+   - Copie le fichier .env.example et renomme la copie en .env
+   - Ouvre .env et mets :
+     ADMIN_USER=Sramtwo
+     ADMIN_PASS=ton_mot_de_passe_panel
+     SYNC_SECRET=ton_mot_de_passe_sync_serveur
+   - (Remplace par tes vrais mots de passe.) Sauvegarde.
+
+3. Lancer le serveur
+   - Ouvre PowerShell ou CMD.
+   - Va dans auth_server, ex. :
+     cd "C:\Users\Jojo\Desktop\New folder\engime bo7\auth_server"
+   - Lance :  npm install   (attends la fin)
+   - Puis :   npm start
+   - Tu dois voir : Auth server: http://localhost:3000
+   - Laisse la fenêtre ouverte.
+
+4. Tester le panel
+   - Ouvre ton navigateur → http://localhost:3000
+   - Connecte-toi : Sramtwo + le mot de passe (ADMIN_PASS)
+   - Crée une clé (bouton Générer)
+   - Clique sur « Sync serveur » → entre le SYNC_SECRET
+   - Tu dois voir « X clé(s) synchronisée(s) »
+
+5. Faire accepter la clé dans le loader
+   - Ouvre auth_config.hpp (à la racine du projet engime bo7)
+   - Trouve AUTH_API_BASE et mets :
+     #define AUTH_API_BASE "http://localhost:3000"
+   - Sans slash à la fin. Sauvegarde.
+   - Recompile ton loader, lance-le, entre la même clé → doit être acceptée.
+
+================================================================================
+  PARTIE 2 — METTRE EN LIGNE (Render)
+================================================================================
+
+- Va sur https://dashboard.render.com
+- New + → Web Service
+- Connecte ton repo GitHub (celui qui contient auth_server)
+- Root Directory : auth_server   (si ton repo = tout le projet)
+- Build Command : npm install
+- Start Command : npm start
+- Environment Variables (ajoute) :
+  ADMIN_USER = Sramtwo
+  ADMIN_PASS = ton_mot_de_passe_panel
+  SYNC_SECRET = ton_mot_de_passe_sync_serveur
+- Create Web Service
+- Quand c’est vert, note l’URL (ex. https://panel-auth-xxxx.onrender.com)
+- Dans auth_config.hpp mets :  #define AUTH_API_BASE "https://panel-auth-xxxx.onrender.com"
+  (ta vraie URL, sans slash à la fin). Recompile le loader.
+
+================================================================================
+  PARTIE 3 — METTRE EN LIGNE (VPS)
+================================================================================
+
+- Achète un VPS (Ubuntu), connecte-toi en SSH.
+- Installe Node :  sudo apt update && sudo apt install -y nodejs npm
+- Mets le dossier auth_server sur le VPS (upload ou git clone).
+- Dans auth_server : crée .env (comme en local), puis :
+  npm install
+  sudo npm install -g pm2
+  pm2 start server.js --name panel-auth
+  pm2 save && pm2 startup
+- Ouvre le port 3000 dans le firewall.
+- Accès : http://IP_DU_VPS:3000
+- Pour HTTPS + domaine : installe Nginx + Certbot, configure un vhost qui
+  proxy vers 127.0.0.1:3000, puis certbot --nginx -d ton-domaine.com
+- Dans auth_config.hpp : AUTH_API_BASE = "https://ton-domaine.com" (sans slash).
+
+================================================================================
+  RÉSUMÉ
+================================================================================
+
+Local :
+  .env (ADMIN_PASS, SYNC_SECRET) → npm install → npm start
+  → http://localhost:3000 → connexion, clé, Sync serveur
+  → auth_config.hpp = "http://localhost:3000" → recompile loader
+
+En ligne :
+  Render : repo GitHub + variables d’env → AUTH_API_BASE = URL Render
+  VPS : Node + pm2 + (optionnel) Nginx/Certbot → AUTH_API_BASE = ton URL
+
+Les clés valides dans le panel (après Sync serveur) sont celles que le loader
+accepte.
+
+================================================================================

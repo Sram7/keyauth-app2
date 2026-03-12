@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050608;
+      --bg-elevated: #0a0c10;
+      --bg-card: rgba(12, 14, 20, 0.85);
+      --bg-hover: rgba(22, 26, 36, 0.9);
+      --border: rgba(255,255,255,0.06);
+      --border-strong: rgba(255,255,255,0.1);
+      --text: #f1f3f6;
+      --text-muted: #8b92a1;
+      --accent: #38bdf8;
+      --accent-deep: #0ea5e9;
+      --accent-glow: rgba(56, 189, 248, 0.5);
+      --accent-dim: rgba(56, 189, 248, 0.15);
+      --accent-hover: #7dd3fc;
+      --success: #34d399;
+      --success-dim: rgba(52, 211, 153, 0.2);
+      --danger: #f87171;
+      --danger-dim: rgba(248, 113, 113, 0.2);
+      --warning: #fbbf24;
+      --warning-dim: rgba(251, 191, 36, 0.2);
+      --radius: 12px;
+      --radius-sm: 10px;
+      --sidebar-w: 220px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+
+    @keyframes bgShift {
+      0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+      50% { opacity: 0.9; transform: scale(1.05) rotate(1deg); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0); }
+      33% { transform: translate(2%, -2%); }
+      66% { transform: translate(-1%, 1%); }
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(24px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 20px var(--accent-glow); }
+      50% { box-shadow: 0 0 32px var(--accent-glow); }
+    }
+
+    .login-page {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+      position: relative; overflow: hidden;
+    }
+    .login-page::before {
+      content: ''; position: absolute; inset: -50%;
+      background: radial-gradient(ellipse 70% 50% at 30% 20%, rgba(56, 189, 248, 0.25) 0%, transparent 50%),
+                  radial-gradient(ellipse 60% 40% at 70% 80%, rgba(14, 165, 233, 0.2) 0%, transparent 50%),
+                  radial-gradient(ellipse 80% 60% at 50% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 45%);
+      animation: bgShift 12s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .login-page::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, transparent 0%, rgba(56, 189, 248, 0.03) 50%, transparent 100%);
+      background-size: 400% 400%;
+      animation: float 20s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .login-card {
+      width: 100%; max-width: 420px; position: relative; z-index: 1;
+      background: var(--bg-card); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border); border-radius: 24px; padding: 48px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 32px 64px -16px rgba(0,0,0,0.6);
+      animation: cardIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .login-card .logo { font-size: 1.85rem; font-weight: 800; letter-spacing: -0.04em; margin-bottom: 10px; }
+    .login-card .logo span { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .login-card .sub { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 28px; line-height: 1.5; }
+    .login-card label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .login-card input {
+      width: 100%; padding: 15px 20px; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text); font-size: 1rem; margin-bottom: 20px; font-family: inherit;
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    .login-card input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-dim); }
+    .login-card .btn-submit {
+      width: 100%; padding: 16px; position: relative; overflow: hidden;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+      border: none; border-radius: var(--radius-sm); color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.3s;
+    }
+    .login-card .btn-submit::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      background-size: 200% 100%; animation: shimmer 2.5s ease-in-out infinite;
+    }
+    .login-card .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 16px 40px var(--accent-glow); }
+    .login-card .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .login-card .btn-submit:disabled::after { display: none; }
+    .login-error {
+      padding: 14px 18px; background: var(--danger-dim); border: 1px solid rgba(248,113,113,0.3);
+      border-radius: var(--radius-sm); color: var(--danger); font-size: 0.9rem; margin-bottom: 18px; display: none;
+      animation: fadeInUp 0.3s ease;
+    }
+    .login-error.visible { display: block; }
+
+    .panel-wrap { display: flex; min-height: 100vh; position: relative; }
+    .panel-wrap::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background: radial-gradient(ellipse 80% 50% at 0% 0%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+                  radial-gradient(ellipse 60% 40% at 100% 100%, rgba(14, 165, 233, 0.06) 0%, transparent 50%);
+    }
+    .sidebar {
+      width: var(--sidebar-w); position: relative; z-index: 1;
+      background: rgba(10, 12, 16, 0.9); backdrop-filter: blur(16px);
+      border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0;
+      animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .sidebar .brand {
+      padding: 18px 16px; font-size: 1.2rem; font-weight: 800; letter-spacing: -0.03em;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar .brand span { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .sidebar .nav { flex: 1; padding: 12px 12px; }
+    .sidebar .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius-sm);
+      background: var(--accent-dim); color: var(--accent); font-weight: 600; font-size: 0.88rem;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      transition: all 0.25s;
+    }
+    .sidebar .nav-item:hover { background: rgba(56, 189, 248, 0.25); box-shadow: 0 0 24px var(--accent-dim); }
+    .sidebar .nav-item .icon { font-size: 1.1rem; }
+    .sidebar .user-block { padding: 14px; border-top: 1px solid var(--border); }
+    .sidebar .user-block .name { font-weight: 700; font-size: 0.88rem; }
+    .sidebar .user-block .role { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+    .sidebar .btn-logout {
+      width: 100%; margin-top: 10px; padding: 8px 12px; background: transparent; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-muted); font-size: 0.88rem; font-weight: 500;
+      cursor: pointer; transition: all 0.25s;
+    }
+    .sidebar .btn-logout:hover { background: var(--danger-dim); color: var(--danger); border-color: rgba(248,113,113,0.4); transform: translateX(4px); }
+
+    .main { flex: 1; min-width: 0; padding: 20px 24px; position: relative; z-index: 1; }
+    .main .top { margin-bottom: 20px; animation: fadeInUp 0.5s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .main .top h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 4px; }
+    .main .top .sub { color: var(--text-muted); font-size: 0.88rem; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card {
+      background: var(--bg-card); backdrop-filter: blur(12px); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 18px; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .stat-card:nth-child(1) { animation-delay: 0.15s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.25s; }
+    .stat-card:nth-child(4) { animation-delay: 0.3s; }
+    .stat-card:hover {
+      border-color: rgba(56, 189, 248, 0.3); transform: translateY(-6px);
+      box-shadow: 0 20px 40px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(56, 189, 248, 0.1);
+    }
+    .stat-card .value { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.03em; transition: transform 0.2s; }
+    .stat-card:hover .value { transform: scale(1.05); }
+    .stat-card .value.accent { color: var(--accent); text-shadow: 0 0 30px var(--accent-dim); }
+    .stat-card .value.green { color: var(--success); }
+    .stat-card .value.red { color: var(--danger); }
+    .stat-card .value.yellow { color: var(--warning); }
+    .stat-card .label { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+
+    .card {
+      background: var(--bg-card); backdrop-filter: blur(12px); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px; margin-bottom: 18px;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.03);
+      animation: fadeInUp 0.5s 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .card:hover { border-color: rgba(255,255,255,0.08); }
+    .card:first-of-type { border-left: 3px solid rgba(56, 189, 248, 0.35); }
+    .card:first-of-type:hover { border-left-color: var(--accent); }
+    .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .form-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+    .field { flex: 1; min-width: 100px; }
+    .field label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    .field input, .field select {
+      width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text); font-size: 0.88rem; font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field select {
+      cursor: pointer; appearance: none; -webkit-appearance: none;
+      background-color: var(--bg-elevated);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%2338bdf8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center; padding-right: 44px;
+      font-weight: 500;
+    }
+    .field select:hover { border-color: rgba(56, 189, 248, 0.4); }
+    .field select option {
+      background: #0f1319; color: #f1f3f6; font-weight: 500; padding: 12px;
+    }
+    .field select option:checked { background: rgba(56, 189, 248, 0.2); color: var(--accent); }
+    .field input:focus, .field select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+
+    .duration-picker { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .duration-picker .native-select {
+      position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; margin: -1px; overflow: hidden;
+    }
+    .duration-option {
+      display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text); font-size: 0.85rem; font-weight: 600; font-family: inherit; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+    }
+    .duration-option:hover {
+      background: rgba(56, 189, 248, 0.12); border-color: rgba(56, 189, 248, 0.4); color: var(--accent);
+    }
+    .duration-option.active {
+      background: rgba(56, 189, 248, 0.22); border-color: var(--accent); color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-dim);
+    }
+    .duration-option[data-value="1h"]::before { content: '🆓'; font-size: 0.9rem; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 18px;
+      border: none; border-radius: var(--radius-sm); font-family: inherit; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%); color: #fff;
+      position: relative; overflow: hidden;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px var(--accent-glow); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg-hover); color: var(--text); border-color: rgba(255,255,255,0.1); }
+    .btn-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(248,113,113,0.3); }
+    .btn-danger:hover { background: rgba(248,113,113,0.3); transform: translateY(-1px); }
+    .btn-sm { padding: 7px 12px; font-size: 0.78rem; }
+
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .search-wrap { position: relative; flex: 1; min-width: 180px; }
+    .search-wrap input {
+      width: 100%; padding: 10px 14px 10px 40px; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text); font-size: 0.85rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-wrap input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+    .search-wrap .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem; pointer-events: none; }
+
+    .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th {
+      text-align: left; padding: 12px 14px; background: rgba(255,255,255,0.03); color: var(--text-muted);
+      font-weight: 600; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--border); transition: background 0.2s; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-hover); }
+    .key-cell { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 500; }
+    .key-cell .copy-btn {
+      margin-left: 8px; padding: 4px 10px; font-size: 0.7rem; background: var(--accent-dim); color: var(--accent);
+      border: none; border-radius: 6px; cursor: pointer; opacity: 0.9; transition: all 0.2s;
+    }
+    .key-cell .copy-btn:hover { opacity: 1; background: rgba(56, 189, 248, 0.25); }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
+    .badge-ok { background: var(--success-dim); color: var(--success); }
+    .badge-revoked { background: var(--danger-dim); color: var(--danger); }
+    .badge-expired { background: var(--warning-dim); color: var(--warning); }
+    .actions-cell { display: flex; gap: 10px; flex-wrap: wrap; }
+    .note-cell { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); }
+    .meta-cell { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-muted); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .meta-cell[title] { cursor: help; }
+    .empty-row td { padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 0.88rem; background: var(--bg-card) !important; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 24px;
+      opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
+    }
+    .modal-backdrop.visible { opacity: 1; visibility: visible; }
+    .modal-backdrop.visible .modal { transform: scale(1); opacity: 1; }
+    .modal {
+      width: 100%; max-width: 420px; background: var(--bg-card); backdrop-filter: blur(20px);
+      border: 1px solid var(--border); border-radius: var(--radius); padding: 24px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 32px 64px -12px rgba(0,0,0,0.6);
+      transform: scale(0.92); opacity: 0; transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+    }
+    .modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 18px; }
+    .modal .field { margin-bottom: 14px; }
+    .modal .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+    #toast-container { position: fixed; bottom: 28px; right: 28px; z-index: 2000; display: flex; flex-direction: column; gap: 12px; max-width: 400px; }
+    .toast {
+      padding: 18px 22px; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 500;
+      background: var(--bg-card); backdrop-filter: blur(12px); border: 1px solid var(--border);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.4); display: flex; align-items: center; gap: 14px;
+      animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .toast.success { border-left: 4px solid var(--success); }
+    .toast.error { border-left: 4px solid var(--danger); }
+    .toast.info { border-left: 4px solid var(--accent); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(32px) scale(0.95); } to { opacity: 1; transform: translateX(0) scale(1); } }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="login-view" class="login-page">
+    <div class="login-card">
+      <div class="logo">Panel <span>Admin</span></div>
+      <p class="sub">Connecte-toi avec ton identifiant et ton mot de passe.</p>
+      <form id="login-form">
+        <div id="login-error" class="login-error"></div>
+        <label for="login-user">Utilisateur</label>
+        <input type="text" id="login-user" name="user" placeholder="Utilisateur" autocomplete="username">
+        <label for="login-pass">Mot de passe</label>
+        <input type="password" id="login-pass" name="password" placeholder="Mot de passe" autocomplete="current-password">
+        <button type="submit" class="btn-submit" id="btn-login-submit">Connexion</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="panel-view" class="panel-wrap hidden">
+    <aside class="sidebar">
+      <div class="brand">Panel<span>.</span>Admin</div>
+      <nav class="nav"><div class="nav-item"><span class="icon">🔑</span><span>Clés</span></div></nav>
+      <div class="user-block">
+        <div class="name" id="admin-name">Admin</div>
+        <div class="role">Administrateur</div>
+        <button type="button" class="btn-logout" id="btn-logout">Déconnexion</button>
+      </div>
+    </aside>
+    <main class="main">
+      <div class="top">
+        <h1>Tableau de bord</h1>
+        <p class="sub">Gestion des clés — HWID, IP et Discord ID enregistrés à chaque connexion avec une clé.</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="value accent" id="stat-total">0</div><div class="label">Total clés</div></div>
+        <div class="stat-card"><div class="value green" id="stat-active">0</div><div class="label">Actives</div></div>
+        <div class="stat-card"><div class="value red" id="stat-revoked">0</div><div class="label">Révoquées</div></div>
+        <div class="stat-card"><div class="value yellow" id="stat-expired">0</div><div class="label">Expirées</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Créer des clés</div>
+        <div class="form-row">
+          <div class="field" style="max-width: 100px;"><label>Nombre</label><input type="number" id="key-count" value="1" min="1" max="100"></div>
+          <div class="field" style="flex: 2; min-width: 180px;"><label>Produit</label><input type="text" id="key-product" value="External Cheat" placeholder="External Cheat"></div>
+          <div class="field" style="flex: 1; min-width: 280px;"><label>Durée de la clé</label>
+            <div class="duration-picker" id="duration-key-expires">
+              <select id="key-expires" class="native-select" aria-hidden="true"><option value="">Aucune</option><option value="1h">1 heure</option><option value="1d">1 jour</option><option value="1w">1 semaine</option><option value="1m">1 mois</option></select>
+              <button type="button" class="duration-option active" data-value="">Aucune</button>
+              <button type="button" class="duration-option" data-value="1h">1 heure</button>
+              <button type="button" class="duration-option" data-value="1d">1 jour</button>
+              <button type="button" class="duration-option" data-value="1w">1 semaine</button>
+              <button type="button" class="duration-option" data-value="1m">1 mois</button>
+            </div>
+          </div>
+          <div class="field" style="flex: 0;"><label>&nbsp;</label><button type="button" class="btn btn-primary" id="btn-create-keys">Générer</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <span>Liste des clés</span>
+          <div class="toolbar">
+            <div class="search-wrap"><span class="search-icon">🔍</span><input type="text" id="search-keys" placeholder="Rechercher..."></div>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-sync-server" title="Envoie les clés du panel vers le serveur (pour le loader)">Sync serveur</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-export-keys">Exporter</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-refresh-keys">Actualiser</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Clé</th>
+                <th>Produit</th>
+                <th>Note</th>
+                <th>Créée</th>
+                <th>Expire</th>
+                <th>Statut</th>
+                <th>Utilisations</th>
+                <th>HWID (dernière connexion)</th>
+                <th>IP (dernière connexion)</th>
+                <th>Discord ID (dernière connexion)</th>
+                <th>Dernière utilisation</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="keys-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="modal-edit" class="modal-backdrop">
+    <div class="modal">
+      <h3>Modifier la clé</h3>
+      <input type="hidden" id="edit-id">
+      <div class="field"><label>Produit</label><input type="text" id="edit-product" placeholder="External Cheat"></div>
+      <div class="field"><label>Note</label><input type="text" id="edit-note" placeholder="Ex: client X"></div>
+      <div class="field"><label>Durée de la clé</label>
+      <div class="duration-picker" id="duration-edit-expires">
+        <select id="edit-expires" class="native-select" aria-hidden="true"><option value="">Aucune</option><option value="1h">1 heure</option><option value="1d">1 jour</option><option value="1w">1 semaine</option><option value="1m">1 mois</option></select>
+        <button type="button" class="duration-option active" data-value="">Aucune</button>
+        <button type="button" class="duration-option" data-value="1h">1 heure</button>
+        <button type="button" class="duration-option" data-value="1d">1 jour</button>
+        <button type="button" class="duration-option" data-value="1w">1 semaine</button>
+        <button type="button" class="duration-option" data-value="1m">1 mois</button>
+      </div>
+    </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="btn-edit-cancel">Annuler</button>
+        <button type="button" class="btn btn-primary" id="btn-edit-save">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script>
+    const STORAGE_KEYS = 'panel_keys';
+    const STORAGE_SESSION = 'panel_session';
+    const ADMIN_USER = 'Sramtwo';
+    const ADMIN_PASS = 'fh839ZHF3hefuiehfezF83';
+    const API_BASE = '';
+
+    let allKeys = [];
+
+    function showView(id) {
+      document.getElementById('login-view').classList.toggle('hidden', id !== 'login-view');
+      document.getElementById('panel-view').classList.toggle('hidden', id !== 'panel-view');
+    }
+
+    function toast(msg, type) {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = 'toast ' + (type || 'info');
+      const icons = { success: '✓', error: '✕', info: 'ℹ' };
+      el.innerHTML = '<span style="font-size:1.1rem">' + (icons[type] || '') + '</span><span>' + msg + '</span>';
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 3800);
+    }
+
+    function getStoredKeys() {
+      try { const raw = localStorage.getItem(STORAGE_KEYS); return raw ? JSON.parse(raw) : []; } catch (e) { return []; }
+    }
+    function setStoredKeys(keys) { localStorage.setItem(STORAGE_KEYS, JSON.stringify(keys)); }
+
+    function nextId(keys) { if (!keys.length) return 1; return Math.max(...keys.map(k => k.id)) + 1; }
+
+    function generateKey() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let s = ''; for (let i = 0; i < 4; i++) { if (i) s += '-'; for (let j = 0; j < 4; j++) s += chars[Math.floor(Math.random() * chars.length)]; }
+      return s;
+    }
+
+    function formatDate(s) {
+      if (!s) return '—';
+      return new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    function expirationToDate(value) {
+      if (!value) return null;
+      var d = new Date();
+      if (value === '1h') d.setHours(d.getHours() + 1);
+      else if (value === '1d') d.setDate(d.getDate() + 1);
+      else if (value === '1w') d.setDate(d.getDate() + 7);
+      else if (value === '1m') d.setMonth(d.getMonth() + 1);
+      else return null;
+      if (value !== '1h') d.setHours(23, 59, 59, 999);
+      return d.toISOString();
+    }
+    function dateToExpiration(iso) {
+      if (!iso) return '';
+      var exp = new Date(iso);
+      var now = new Date();
+      var ms = exp - now;
+      if (ms <= 0) return '';
+      var hours = ms / (60 * 60 * 1000);
+      if (hours <= 1.5) return '1h';
+      var days = ms / (24 * 60 * 60 * 1000);
+      if (days <= 2) return '1d';
+      if (days <= 9) return '1w';
+      if (days <= 35) return '1m';
+      return '1m';
+    }
+    function escapeHtml(s) {
+      const div = document.createElement('div'); div.textContent = s; return div.innerHTML;
+    }
+
+    function initDurationPicker(pickerId) {
+      const picker = document.getElementById(pickerId);
+      if (!picker) return;
+      const select = picker.querySelector('.native-select');
+      const options = picker.querySelectorAll('.duration-option');
+      if (!select || !options.length) return;
+
+      function setActive(val) {
+        options.forEach(function(btn) {
+          btn.classList.toggle('active', (btn.getAttribute('data-value') || '') === (val || ''));
+        });
+      }
+
+      options.forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const val = btn.getAttribute('data-value') || '';
+          select.value = val;
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+          setActive(val);
+        });
+      });
+      setActive(select.value);
+      picker._updateDurationDisplay = function() { setActive(select.value); };
+    }
+
+    function updateDurationPickerDisplay(pickerId) {
+      const picker = document.getElementById(pickerId);
+      if (picker && picker._updateDurationDisplay) picker._updateDurationDisplay();
+    }
+
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const user = document.getElementById('login-user').value.trim();
+      const pass = document.getElementById('login-pass').value;
+      const err = document.getElementById('login-error');
+      err.classList.remove('visible');
+      if (!user || !pass) { err.textContent = 'Utilisateur et mot de passe requis.'; err.classList.add('visible'); return; }
+      if (user !== ADMIN_USER || pass !== ADMIN_PASS) { err.textContent = 'Identifiants incorrects.'; err.classList.add('visible'); return; }
+      sessionStorage.setItem(STORAGE_SESSION, user);
+      document.getElementById('admin-name').textContent = user;
+      showView('panel-view');
+      loadStats();
+      loadKeys();
+      toast('Connexion réussie.', 'success');
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', function() {
+      sessionStorage.removeItem(STORAGE_SESSION);
+      showView('login-view');
+      toast('Déconnecté.', 'info');
+    });
+
+    function loadStats() {
+      const keys = getStoredKeys();
+      const now = new Date().toISOString();
+      const active = keys.filter(k => !k.revoked).length;
+      const expired = keys.filter(k => k.expires_at && k.expires_at < now).length;
+      document.getElementById('stat-total').textContent = keys.length;
+      document.getElementById('stat-active').textContent = active;
+      document.getElementById('stat-revoked').textContent = keys.length - active;
+      document.getElementById('stat-expired').textContent = expired;
+    }
+
+    function filterKeys(keys, query) {
+      if (!query || !query.trim()) return keys;
+      const q = query.trim().toLowerCase();
+      return keys.filter(k =>
+        (k.key_text && k.key_text.toLowerCase().includes(q)) ||
+        (k.product && k.product.toLowerCase().includes(q)) ||
+        (k.note && k.note.toLowerCase().includes(q)) ||
+        (k.last_use_hwid && k.last_use_hwid.toLowerCase().includes(q)) ||
+        (k.last_use_ip && k.last_use_ip.toLowerCase().includes(q)) ||
+        (k.last_use_discord_id && k.last_use_discord_id.toLowerCase().includes(q))
+      );
+    }
+
+    function renderKeys(keys) {
+      const tbody = document.getElementById('keys-tbody');
+      const query = (document.getElementById('search-keys') || {}).value || '';
+      const filtered = filterKeys(keys, query);
+      const now = new Date().toISOString();
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="12">Aucune clé. Génère des clés ci-dessus.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = filtered.map(k => {
+        let status = 'ok';
+        if (k.revoked) status = 'revoked';
+        else if (k.expires_at && k.expires_at < now) status = 'expired';
+        const statusClass = status === 'ok' ? 'badge-ok' : status === 'revoked' ? 'badge-revoked' : 'badge-expired';
+        const statusText = status === 'ok' ? 'Active' : status === 'revoked' ? 'Révoquée' : 'Expirée';
+        const keyEsc = escapeHtml(k.key_text);
+        const hwid = (k.last_use_hwid || '').trim() || '—';
+        const ip = (k.last_use_ip || '').trim() || '—';
+        const discordId = (k.last_use_discord_id || '').trim() || '—';
+        return '<tr>' +
+          '<td class="key-cell">' + keyEsc + ' <button type="button" class="copy-btn" data-copy="' + keyEsc + '" title="Copier">Copier</button></td>' +
+          '<td>' + escapeHtml(k.product || '') + '</td>' +
+          '<td class="note-cell" title="' + escapeHtml(k.note || '') + '">' + (k.note ? escapeHtml(k.note) : '—') + '</td>' +
+          '<td>' + formatDate(k.created_at) + '</td>' +
+          '<td>' + (k.expires_at ? formatDate(k.expires_at) : '—') + '</td>' +
+          '<td><span class="badge ' + statusClass + '">' + statusText + '</span></td>' +
+          '<td>' + (k.use_count || 0) + '</td>' +
+          '<td class="meta-cell" title="' + escapeHtml(hwid) + '">' + escapeHtml(hwid) + '</td>' +
+          '<td class="meta-cell" title="' + escapeHtml(ip) + '">' + escapeHtml(ip) + '</td>' +
+          '<td class="meta-cell" title="' + escapeHtml(discordId) + '">' + escapeHtml(discordId) + '</td>' +
+          '<td>' + (k.last_used_at ? formatDate(k.last_used_at) : '—') + '</td>' +
+          '<td class="actions-cell">' +
+            '<button type="button" class="btn btn-ghost btn-sm" data-edit="' + k.id + '">Modifier</button>' +
+            (!k.revoked ? '<button type="button" class="btn btn-ghost btn-sm" data-revoke="' + k.id + '">Révoquer</button>' : '<button type="button" class="btn btn-ghost btn-sm" data-unrevoke="' + k.id + '">Réactiver</button>') +
+            '<button type="button" class="btn btn-danger btn-sm" data-delete="' + k.id + '">Supprimer</button>' +
+          '</td></tr>';
+      }).join('');
+      tbody.querySelectorAll('[data-copy]').forEach(el => el.addEventListener('click', function() {
+        navigator.clipboard.writeText(this.getAttribute('data-copy')).then(() => toast('Clé copiée.', 'success')).catch(() => toast('Copie échouée.', 'error'));
+      }));
+      tbody.querySelectorAll('[data-edit]').forEach(el => el.addEventListener('click', () => openEditModal(parseInt(el.dataset.edit, 10))));
+      tbody.querySelectorAll('[data-revoke]').forEach(el => el.addEventListener('click', () => revokeKey(parseInt(el.dataset.revoke, 10), true)));
+      tbody.querySelectorAll('[data-unrevoke]').forEach(el => el.addEventListener('click', () => revokeKey(parseInt(el.dataset.unrevoke, 10), false)));
+      tbody.querySelectorAll('[data-delete]').forEach(el => el.addEventListener('click', () => deleteKey(parseInt(el.dataset.delete, 10))));
+    }
+
+    function loadKeys() { allKeys = getStoredKeys(); renderKeys(allKeys); }
+
+    document.getElementById('search-keys').addEventListener('input', () => renderKeys(allKeys));
+    document.getElementById('btn-refresh-keys').addEventListener('click', () => { loadStats(); loadKeys(); toast('Liste actualisée.', 'success'); });
+    document.getElementById('btn-export-keys').addEventListener('click', () => {
+      const query = (document.getElementById('search-keys') || {}).value || '';
+      const filtered = filterKeys(allKeys, query);
+      const lines = filtered.map(k => [k.key_text, k.product || '', k.revoked ? 'Révoquée' : 'Active', k.expires_at || '—', k.last_use_hwid || '', k.last_use_ip || '', k.last_use_discord_id || ''].join('\t'));
+      const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'keys_export_' + new Date().toISOString().slice(0, 10) + '.txt';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      toast(filtered.length + ' clé(s) exportée(s).', 'success');
+    });
+
+    document.getElementById('btn-sync-server').addEventListener('click', async function() {
+      const secret = prompt('Mot de passe de synchronisation (SYNC_SECRET) :');
+      if (secret === null) return;
+      const keys = getStoredKeys();
+      try {
+        const res = await fetch((API_BASE || '') + '/api/sync-keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ secret: secret.trim(), keys: keys })
+        });
+        const data = await res.json().catch(function() { return {}; });
+        if (res.ok && data.ok) {
+          toast(data.count + ' clé(s) synchronisée(s) avec le serveur.', 'success');
+        } else {
+          var msg = data.error || ('HTTP ' + res.status);
+          if (data.message) msg += ' — ' + data.message;
+          if (msg.indexOf('secret_invalide') !== -1) msg = 'Mot de passe incorrect (vérifie SYNC_SECRET).';
+          else if (msg.indexOf('SYNC_SECRET') !== -1) msg = 'Configure SYNC_SECRET (variables d\'environnement / secret).';
+          else if (msg.indexOf('blobs') !== -1 || msg.indexOf('kv_error') !== -1) msg = 'Erreur stockage serveur. ' + (data.message || '');
+          toast(msg, 'error');
+        }
+      } catch (e) {
+        toast('Erreur réseau ou API absente.', 'error');
+      }
+    });
+
+    function openEditModal(id) {
+      const k = allKeys.find(x => x.id === id);
+      if (!k) return;
+      document.getElementById('edit-id').value = id;
+      document.getElementById('edit-product').value = k.product || '';
+      document.getElementById('edit-note').value = k.note || '';
+      document.getElementById('edit-expires').value = dateToExpiration(k.expires_at);
+      updateDurationPickerDisplay('duration-edit-expires');
+      document.getElementById('modal-edit').classList.add('visible');
+    }
+    document.getElementById('btn-edit-cancel').addEventListener('click', () => document.getElementById('modal-edit').classList.remove('visible'));
+    document.getElementById('btn-edit-save').addEventListener('click', function() {
+      const id = parseInt(document.getElementById('edit-id').value, 10);
+      const product = document.getElementById('edit-product').value.trim() || '';
+      const note = document.getElementById('edit-note').value.trim() || null;
+      const expiresVal = document.getElementById('edit-expires').value || null;
+      const keys = getStoredKeys();
+      const row = keys.find(k => k.id === id);
+      if (!row) return;
+      row.product = product || 'External Cheat';
+      row.note = note;
+      row.expires_at = expirationToDate(expiresVal);
+      setStoredKeys(keys);
+      document.getElementById('modal-edit').classList.remove('visible');
+      loadStats();
+      loadKeys();
+      toast('Clé mise à jour.', 'success');
+    });
+
+    function revokeKey(id, revoked) {
+      const keys = getStoredKeys();
+      const row = keys.find(k => k.id === id);
+      if (row) { row.revoked = revoked ? 1 : 0; setStoredKeys(keys); loadStats(); loadKeys(); toast(revoked ? 'Clé révoquée.' : 'Clé réactivée.', 'success'); }
+    }
+    function deleteKey(id) {
+      if (!confirm('Supprimer cette clé définitivement ?')) return;
+      setStoredKeys(getStoredKeys().filter(k => k.id !== id));
+      loadStats();
+      loadKeys();
+      toast('Clé supprimée.', 'success');
+    }
+
+    document.getElementById('btn-create-keys').addEventListener('click', function() {
+      const count = parseInt(document.getElementById('key-count').value, 10) || 1;
+      const product = document.getElementById('key-product').value.trim() || 'External Cheat';
+      const expiresVal = document.getElementById('key-expires').value.trim() || null;
+      const keys = getStoredKeys();
+      const existing = new Set(keys.map(k => k.key_text));
+      const created = [];
+      const expiresAt = expirationToDate(expiresVal);
+      for (let i = 0; i < count; i++) {
+        const k = generateKey();
+        if (existing.has(k)) continue;
+        keys.push({
+          id: nextId(keys),
+          key_text: k,
+          product: product,
+          created_at: new Date().toISOString(),
+          expires_at: expiresAt,
+          revoked: 0,
+          note: null,
+          last_used_at: null,
+          use_count: 0,
+          last_use_hwid: null,
+          last_use_ip: null,
+          last_use_discord_id: null
+        });
+        existing.add(k);
+        created.push(k);
+      }
+      setStoredKeys(keys);
+      loadStats();
+      loadKeys();
+      toast(created.length + ' clé(s) créée(s).', 'success');
+    });
+
+    document.getElementById('modal-edit').addEventListener('click', function(e) {
+      if (e.target.id === 'modal-edit') document.getElementById('modal-edit').classList.remove('visible');
+    });
+
+    initDurationPicker('duration-key-expires');
+    initDurationPicker('duration-edit-expires');
+
+    var session = sessionStorage.getItem(STORAGE_SESSION);
+    if (session) {
+      document.getElementById('admin-name').textContent = session;
+      showView('panel-view');
+      loadStats();
+      loadKeys();
+    } else {
+      showView('login-view');
+    }
+  </script>
+</body>
+</html>
